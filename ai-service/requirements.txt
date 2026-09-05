@@ -1,7 +1,8 @@
 fastapi
 uvicorn
 python-multipart
-tensorflow
+torch --index-url https://download.pytorch.org/whl/cpu
+transformers
 pillow
 numpy
 scikit-learn

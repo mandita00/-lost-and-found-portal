@@ -4,8 +4,7 @@ const { upload, cloudinary } = require('../config/cloudinary');
 const isAuthenticated = require('../middleware/auth');
 const axios = require('axios');
 const { sendMatchEmail } = require('../config/mailer');
-const AI_SERVICE_URL = 'http://localhost:8000';
-
+const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 
 // ---------- POST /api/reports/lost ----------
 router.post('/lost', isAuthenticated, upload.single('photo'), async (req, res) => {
