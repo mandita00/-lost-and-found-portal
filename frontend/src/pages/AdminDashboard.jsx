@@ -1,13 +1,31 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 import { API_URL as BASE_URL } from '../config';
 const API_URL = `${BASE_URL}/api/admin`;
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const [tab, setTab] = useState('pending'); // 'pending' | 'history'
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Check auth on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/auth/me`, { withCredentials: true });
+        if (res.data.role !== 'admin') {
+          navigate('/');
+        }
+      } catch (err) {
+        navigate('/login');
+      }
+    }
+    checkAuth();
+  }, [navigate]);
 
   const fetchMatches = async (which) => {
     setLoading(true);

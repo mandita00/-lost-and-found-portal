@@ -177,4 +177,32 @@ router.patch('/notifications/:id/read', isAuthenticated, async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+// ---------- GET /api/reports/search ----------
+router.get('/search', async (req, res) => {
+  try {
+    const searchTerm = req.query.q || '';
+    
+    if (!searchTerm.trim()) {
+      return res.json([]);
+    }
+
+    const searchPattern = `%${searchTerm}%`;
+    const [rows] = await db.query(
+      `SELECT id, type, item_name, description, location, photo_url, status, created_at, user_id
+       FROM reports 
+       WHERE (item_name LIKE ? OR description LIKE ? OR location LIKE ?)
+       AND status = 'open'
+       ORDER BY created_at DESC
+       LIMIT 50`,
+      [searchPattern, searchPattern, searchPattern]
+    );
+    
+    res.json(rows);
+  } catch (err) {
+    console.error('Search error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = router;

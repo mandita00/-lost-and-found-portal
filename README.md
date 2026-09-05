@@ -9,7 +9,7 @@ A privacy-respecting lost and found portal with AI image matching.
 - Auth: Google OAuth
 
 ---
-title: Lost And Found Ai
+FindWise
 emoji: 🔍
 colorFrom: blue
 colorTo: green

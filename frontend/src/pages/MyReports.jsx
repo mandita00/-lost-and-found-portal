@@ -18,8 +18,8 @@ function MyReports() {
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm px-8 py-4 flex justify-between items-center">
         <h1 className="text-lg font-bold text-gray-800">Lost & Found Portal</h1>
-        <button onClick={() => navigate('/dashboard')} className="text-sm text-gray-500 hover:underline">
-          ← Back to Dashboard
+        <button onClick={() => navigate('/')} className="text-sm text-gray-500 hover:underline">
+          ← Back to Home
         </button>
       </nav>
 
