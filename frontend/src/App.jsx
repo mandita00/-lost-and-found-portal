@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { Analytics } from '@vercel/analytics/react'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import ReportLost from './pages/ReportLost'
@@ -23,6 +24,7 @@ function App() {
         <Route path="/search"       element={<SearchResults />} />
         <Route path="/faq"          element={<FAQ />} />
       </Routes>
+      <Analytics />
     </BrowserRouter>
   )
 }
