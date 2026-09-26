@@ -1,6 +1,8 @@
 {
   "rewrites": [
-    { "source": "/backend/:path*", "destination": "https://lost-and-found-backend-6pzs.onrender.com/:path*" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/backend/:path*",
+      "destination": "https://lost-and-found-backend-6pzs.onrender.com/:path*"
+    }
   ]
 }

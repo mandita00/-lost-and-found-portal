@@ -281,7 +281,7 @@ function Home() {
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M2 3a1 1 0 011-1h2.153a1 1 0 011 .894l.851 4.687a1 1 0 01-.96 1.159H5.5a1 1 0 00-.96 1.159l.851 4.687a1 1 0 001 .894h2.153a1 1 0 011-1h2.153a1 1 0 011 .894l.851 4.687a1 1 0 01-.96 1.159H5.5a1 1 0 00-.96 1.159l.851 4.687a1 1 0 001 .894h2.153a1 1 0 011-1v2a1 1 0 11-2 0v-.5H5a1 1 0 100 2h10a1 1 0 100-2h-2.5v.5a1 1 0 11-2 0" />
                   </svg>
-                  +1 (555) 123-4567
+                  +977 9866063042
                 </li>
                 <li className="flex items-center gap-2 text-gray-600 text-sm">
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
