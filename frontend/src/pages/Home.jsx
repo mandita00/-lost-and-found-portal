@@ -275,27 +275,27 @@ function Home() {
                     <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0116 4H4a2 2 0 00-1.997 1.884z" />
                     <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
                   </svg>
-                  info@findwise.edu
+                  manditabista2@gmail.com
                 </li>
                 <li className="flex items-center gap-2 text-gray-600 text-sm">
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M2 3a1 1 0 011-1h2.153a1 1 0 011 .894l.851 4.687a1 1 0 01-.96 1.159H5.5a1 1 0 00-.96 1.159l.851 4.687a1 1 0 001 .894h2.153a1 1 0 011-1h2.153a1 1 0 011 .894l.851 4.687a1 1 0 01-.96 1.159H5.5a1 1 0 00-.96 1.159l.851 4.687a1 1 0 001 .894h2.153a1 1 0 011-1v2a1 1 0 11-2 0v-.5H5a1 1 0 100 2h10a1 1 0 100-2h-2.5v.5a1 1 0 11-2 0" />
                   </svg>
-                  +977 9866063042
+                  +977 9848088420
                 </li>
                 <li className="flex items-center gap-2 text-gray-600 text-sm">
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                   </svg>
-                  University Campus
+                  Texas College
                 </li>
               </ul>
             </div>
           </div>
 
           <div className="border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-600 text-sm">© 2026 FindWise. University Campus.</p>
-            <p className="text-gray-600 text-sm">Made with ❤️ for students</p>
+            <p className="text-gray-600 text-sm">© 2026 FindWise. Texas College.</p>
+            <p className="text-gray-600 text-sm">Developed by Mandita Bista</p>
           </div>
         </div>
       </footer>
