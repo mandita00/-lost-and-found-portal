@@ -1,17 +1,11 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 async function sendMatchEmail(toEmail, itemName, confidence) {
   try {
-    await transporter.sendMail({
-      from: `"Lost & Found Portal" <${process.env.EMAIL_USER}>`,
+    await resend.emails.send({
+      from: 'Lost & Found Portal <onboarding@resend.dev>',
       to: toEmail,
       subject: `Possible match found for your lost item: ${itemName}`,
       html: `
