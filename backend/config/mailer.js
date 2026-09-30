@@ -1,24 +1,35 @@
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// 1. Create reusable transporter object using Gmail SMTP
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+});
 
-async function sendMatchEmail(toEmail, itemName, confidence) {
+// 2. Email sending function
+async function sendMatchNotification(recipientEmail, itemDetails) {
   try {
-    await resend.emails.send({
-      from: 'Lost & Found Portal <onboarding@resend.dev>',
-      to: toEmail,
-      subject: `Possible match found for your lost item: ${itemName}`,
+    const mailOptions = {
+      from: `"Lost & Found Portal" <${process.env.EMAIL_USER}>`,
+      to: recipientEmail, // Dynamic user email address
+      subject: 'Item Found Notification',
       html: `
         <h2>Good news!</h2>
-        <p>We found a possible match for your lost item <b>${itemName}</b>.</p>
-        <p>Match confidence: <b>${confidence}</b></p>
-        <p>Log in to your account to review and confirm the match.</p>
-      `,
-    });
-    console.log(`Email sent to ${toEmail}`);
-  } catch (err) {
-    console.error('Email send error:', err.message);
+        <p>A found item report matching your lost item <strong>${itemDetails.title}</strong> has been submitted.</p>
+        <p>Log in to your account to view the details.</p>
+      `
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Email sent: %s', info.messageId);
+    return info;
+  } catch (error) {
+    console.error('Error sending email via Nodemailer:', error);
+    throw error;
   }
 }
 
-module.exports = { sendMatchEmail };
+module.exports = { sendMatchNotification };
