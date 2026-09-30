@@ -1,4 +1,3 @@
-@'
 require('dotenv').config();
 const db = require('../config/db');
 const { cloudinary } = require('../config/cloudinary');
@@ -33,4 +32,3 @@ const { cloudinary } = require('../config/cloudinary');
   }
   process.exit(0);
 })();
-'@ | Set-Content -Path scripts\clearReports.js -Encoding UTF8
