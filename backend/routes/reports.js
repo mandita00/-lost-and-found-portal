@@ -4,6 +4,7 @@ const { upload, cloudinary } = require('../config/cloudinary');
 const isAuthenticated = require('../middleware/auth');
 const axios = require('axios');
 const { sendMatchEmail } = require('../config/mailer');
+
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 
 // ---------- POST /api/reports/lost ----------
@@ -16,7 +17,9 @@ router.post('/lost', isAuthenticated, upload.single('photo'), async (req, res) =
 
     const photo_url       = req.file?.path     || null;
     const photo_public_id = req.file?.filename || null;
-console.log(`[${req.path}] file received:`, req.file?.originalname, req.file?.size, 'bytes → public_id:', req.file?.filename);
+
+    console.log(`[/lost] file received:`, req.file?.originalname, req.file?.size, 'bytes → public_id:', req.file?.filename);
+
     const [result] = await db.query(
       `INSERT INTO reports
         (user_id, type, item_name, description, location, photo_url, photo_public_id)
@@ -44,7 +47,9 @@ router.post('/found', isAuthenticated, upload.single('photo'), async (req, res) 
 
     const photo_url       = req.file?.path     || null;
     const photo_public_id = req.file?.filename || null;
-console.log(`[${req.path}] file received:`, req.file?.originalname, req.file?.size, 'bytes → public_id:', req.file?.filename);
+
+    console.log(`[/found] file received:`, req.file?.originalname, req.file?.size, 'bytes → public_id:', req.file?.filename);
+
     const [result] = await db.query(
       `INSERT INTO reports
         (user_id, type, item_name, description, location, photo_url, photo_public_id)
@@ -54,15 +59,26 @@ console.log(`[${req.path}] file received:`, req.file?.originalname, req.file?.si
 
     const found_report_id = result.insertId;
 
-    // --- Auto-match against open lost reports ---
-    if (photo_public_id) {
-      try {
-        const [lostReports] = await db.query(
-          `SELECT id, photo_public_id, user_id FROM reports
-           WHERE type = 'lost' AND status = 'open' AND photo_public_id IS NOT NULL`
-        );
+    // ✅ Respond immediately — user is not kept waiting for AI
+    res.status(201).json({
+      message: 'Found item reported successfully',
+      report_id: found_report_id,
+    });
 
-        if (lostReports.length > 0) {
+    // 🤖 Run AI matching in the background after response is already sent
+    if (photo_public_id) {
+      setImmediate(async () => {
+        try {
+          const [lostReports] = await db.query(
+            `SELECT id, photo_public_id, user_id FROM reports
+             WHERE type = 'lost' AND status = 'open' AND photo_public_id IS NOT NULL`
+          );
+
+          if (lostReports.length === 0) {
+            console.log('[AI background] No open lost reports with photos to match against.');
+            return;
+          }
+
           const aiPayload = {
             found_public_id: photo_public_id,
             lost_items: lostReports.map(r => ({
@@ -72,13 +88,13 @@ console.log(`[${req.path}] file received:`, req.file?.originalname, req.file?.si
             })),
           };
 
-         const aiRes = await axios.post(`${AI_SERVICE_URL}/match-all`, aiPayload);
+          const aiRes = await axios.post(`${AI_SERVICE_URL}/match-all`, aiPayload, {
+            timeout: 60000,
+          });
+
           const { best_match, checked } = aiRes.data;
+          console.log(`[AI background] Checked ${checked} lost report(s). Best match:`, best_match);
 
-          console.log(`AI checked ${checked} lost report(s). Best match:`, best_match);
-
-          // Insert a match record for ANY best candidate found, even low confidence,
-          // so admins can review it — but only notify users on confident matches.
           if (best_match) {
             const [matchResult] = await db.query(
               `INSERT INTO matches
@@ -89,11 +105,9 @@ console.log(`[${req.path}] file received:`, req.file?.originalname, req.file?.si
             );
 
             const match_id = matchResult.insertId;
-
-            console.log(`Match record created: Found #${found_report_id} ↔ Lost #${best_match.report_id} (${best_match.confidence} - ${best_match.similarity})`);
+            console.log(`[AI background] Match record created: Found #${found_report_id} ↔ Lost #${best_match.report_id} (${best_match.confidence} - ${best_match.similarity})`);
 
             if (best_match.is_match) {
-              // Get the lost report's owner and item name
               const [[lostReport]] = await db.query(
                 `SELECT r.item_name, u.id AS user_id, u.email
                  FROM reports r
@@ -113,25 +127,33 @@ console.log(`[${req.path}] file received:`, req.file?.originalname, req.file?.si
                 );
 
                 // Email notification
-                if (lostReport.email) {
-                  await sendMatchEmail(lostReport.email, lostReport.item_name, best_match.confidence);
-                }
+if (lostReport.email) {
+  const subject = `Possible match found for your lost item: ${lostReport.item_name}`;
+  const htmlContent = `
+    <h2>Great news!</h2>
+    <p>A found item report matching your lost item <strong>"${lostReport.item_name}"</strong> has been submitted.</p>
+    <p>Match Confidence: <strong>${best_match.confidence}</strong></p>
+    <p>Log in to your account to check the details and verify the match.</p>
+  `;
+
+  await sendMatchEmail(lostReport.email, subject, htmlContent);
+}
+
+                console.log(`[AI background] Notification sent to ${lostReport.email}`);
               }
             } else {
-              console.log(`Low-confidence match recorded (no notification sent).`);
+              console.log('[AI background] Low-confidence match recorded — no notification sent.');
             }
+          } else {
+            console.log('[AI background] No match found above threshold.');
           }
+        } catch (aiErr) {
+          console.error('[AI background] Matching error:', aiErr.code, aiErr.message);
+          console.error('[AI background] AI response data:', JSON.stringify(aiErr.response?.data, null, 2));
         }
-      } catch (aiErr) {
-        console.error('AI matching error:', aiErr.code, aiErr.message);
-        console.error('AI response data:', JSON.stringify(aiErr.response?.data, null, 2));
-      }
+      });
     }
 
-    res.status(201).json({
-      message: 'Found item reported successfully',
-      report_id: found_report_id,
-    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -151,6 +173,7 @@ router.get('/mine', isAuthenticated, async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
 // ---------- GET /api/reports/notifications ----------
 router.get('/notifications', isAuthenticated, async (req, res) => {
   try {
@@ -182,7 +205,7 @@ router.patch('/notifications/:id/read', isAuthenticated, async (req, res) => {
 router.get('/search', async (req, res) => {
   try {
     const searchTerm = req.query.q || '';
-    
+
     if (!searchTerm.trim()) {
       return res.json([]);
     }
@@ -190,14 +213,14 @@ router.get('/search', async (req, res) => {
     const searchPattern = `%${searchTerm}%`;
     const [rows] = await db.query(
       `SELECT id, type, item_name, description, location, photo_url, status, created_at, user_id
-       FROM reports 
+       FROM reports
        WHERE (item_name LIKE ? OR description LIKE ? OR location LIKE ?)
        AND status = 'open'
        ORDER BY created_at DESC
        LIMIT 50`,
       [searchPattern, searchPattern, searchPattern]
     );
-    
+
     res.json(rows);
   } catch (err) {
     console.error('Search error:', err);
