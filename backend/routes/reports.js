@@ -4,6 +4,8 @@ const { upload, cloudinary } = require('../config/cloudinary');
 const isAuthenticated = require('../middleware/auth');
 const axios = require('axios');
 const sendMatchEmail = require('../config/mailer');
+const mailer = require('../config/mailer');
+console.log('[DEBUG Mailer Export]:', mailer);
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 
