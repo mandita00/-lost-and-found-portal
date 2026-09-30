@@ -1,19 +1,24 @@
 const axios = require('axios');
 
-async function sendMatchEmail(toEmail, itemName, confidence) {
+function escapeHtml(str) {
+  if (str === undefined || str === null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+async function sendMatchEmail(toEmail, subject, htmlContent) {
   try {
     await axios.post(
       'https://api.brevo.com/v3/smtp/email',
       {
         sender: { name: 'Lost & Found Portal', email: process.env.BREVO_SENDER_EMAIL },
         to: [{ email: toEmail }],
-        subject: `Possible match found for your lost item: ${itemName}`,
-        htmlContent: `
-          <h2>Good news!</h2>
-          <p>We found a possible match for your lost item <b>${itemName}</b>.</p>
-          <p>Match confidence: <b>${confidence}</b></p>
-          <p>Log in to your account to review and confirm the match.</p>
-        `,
+        subject,
+        htmlContent,
       },
       { headers: { 'api-key': process.env.BREVO_API_KEY, 'Content-Type': 'application/json' } }
     );
@@ -23,4 +28,4 @@ async function sendMatchEmail(toEmail, itemName, confidence) {
   }
 }
 
-module.exports = { sendMatchEmail };
+module.exports = { sendMatchEmail, escapeHtml };
