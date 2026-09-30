@@ -3,9 +3,8 @@ const db = require('../config/db');
 const { upload, cloudinary } = require('../config/cloudinary');
 const isAuthenticated = require('../middleware/auth');
 const axios = require('axios');
-const sendMatchEmail = require('../config/mailer');
-const mailer = require('../config/mailer');
-console.log('[DEBUG Mailer Export]:', mailer);
+// mailer.js exports an object, so it MUST be destructured with braces
+const { sendMatchEmail, escapeHtml } = require('../config/mailer');
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 
@@ -127,21 +126,26 @@ router.post('/found', isAuthenticated, upload.single('photo'), async (req, res) 
                    VALUES (?, ?, ?)`,
                   [lostReport.user_id, match_id, message]
                 );
+                console.log(`[AI background] In-app notification saved for user #${lostReport.user_id}`);
 
-                // Email notification
-if (lostReport.email) {
-  const subject = `Possible match found for your lost item: ${lostReport.item_name}`;
-  const htmlContent = `
-    <h2>Great news!</h2>
-    <p>A found item report matching your lost item <strong>"${lostReport.item_name}"</strong> has been submitted.</p>
-    <p>Match Confidence: <strong>${best_match.confidence}</strong></p>
-    <p>Log in to your account to check the details and verify the match.</p>
-  `;
+                // Email notification — in its own try/catch so an email failure
+                // never aborts the rest of the matching step
+                if (lostReport.email) {
+                  try {
+                    const subject = `Possible match found for your lost item: ${lostReport.item_name}`;
+                    const htmlContent = `
+                      <h2>Great news!</h2>
+                      <p>A found item report matching your lost item <strong>"${escapeHtml(lostReport.item_name)}"</strong> has been submitted.</p>
+                      <p>Match Confidence: <strong>${escapeHtml(best_match.confidence)}</strong></p>
+                      <p>Log in to your account to check the details and verify the match.</p>
+                    `;
 
-  await sendMatchEmail(lostReport.email, subject, htmlContent);
-}
-
-                console.log(`[AI background] Notification sent to ${lostReport.email}`);
+                    await sendMatchEmail(lostReport.email, subject, htmlContent);
+                    console.log(`[AI background] Email sent for user #${lostReport.user_id}`);
+                  } catch (mailErr) {
+                    console.error('[AI background] Email failed:', mailErr.message);
+                  }
+                }
               }
             } else {
               console.log('[AI background] Low-confidence match recorded — no notification sent.');
@@ -151,7 +155,9 @@ if (lostReport.email) {
           }
         } catch (aiErr) {
           console.error('[AI background] Matching error:', aiErr.code, aiErr.message);
-          console.error('[AI background] AI response data:', JSON.stringify(aiErr.response?.data, null, 2));
+          if (aiErr.response?.data) {
+            console.error('[AI background] AI response data:', JSON.stringify(aiErr.response.data, null, 2));
+          }
         }
       });
     }
