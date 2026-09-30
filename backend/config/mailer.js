@@ -1,4 +1,6 @@
-const axios = require('axios');
+const { Resend } = require('resend');
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 function escapeHtml(str) {
   if (str === undefined || str === null) return '';
@@ -12,19 +14,15 @@ function escapeHtml(str) {
 
 async function sendMatchEmail(toEmail, subject, htmlContent) {
   try {
-    await axios.post(
-      'https://api.brevo.com/v3/smtp/email',
-      {
-        sender: { name: 'Lost & Found Portal', email: process.env.BREVO_SENDER_EMAIL },
-        to: [{ email: toEmail }],
-        subject,
-        htmlContent,
-      },
-      { headers: { 'api-key': process.env.BREVO_API_KEY, 'Content-Type': 'application/json' } }
-    );
+    await resend.emails.send({
+      from: 'FindWise <onboarding@resend.dev>',
+      to: toEmail,
+      subject,
+      html: htmlContent,
+    });
     console.log(`Email sent to ${toEmail}`);
   } catch (err) {
-    console.error('Email send error:', err.response?.data || err.message);
+    console.error('Email send error:', err.message);
   }
 }
 
